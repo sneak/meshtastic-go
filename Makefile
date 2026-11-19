@@ -13,3 +13,6 @@ lint:
 
 clean:
 	rm -rf builds
+
+dev:
+	DEBUG=true go run ./cmd/meshtastic-go/ --port /dev/tty.usbserial-0001 stream

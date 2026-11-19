@@ -20,6 +20,14 @@ func CLIEntry(version, commit, builddate string) {
 		Usage: "Interface with meshtastic radios",
 		Commands: []*cli.Command{
 			{
+				Name:        "stream",
+				Usage:       "Stream mesh packets",
+				UsageText:   "stream - stream mesh packets in realtime",
+				Description: "Stream mesh packets in realtime",
+				ArgsUsage:   "",
+				Action:      streamPackets,
+			},
+			{
 				Name:        "info",
 				Usage:       "Show radio information",
 				UsageText:   "info [command] - Show radio information",

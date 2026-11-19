@@ -82,10 +82,10 @@ func showPositionInfo(c *cli.Context) error {
 	return nil
 }
 
-func displayNodes(r gomesh.Radio, jsonFormat bool) error {
+func getNodes(r gomesh.Radio) ([]*gomeshproto.FromRadio_NodeInfo, error) {
 	responses, err := r.GetRadioInfo()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	nodes := make([]*gomeshproto.FromRadio_NodeInfo, 0)
@@ -93,6 +93,29 @@ func displayNodes(r gomesh.Radio, jsonFormat bool) error {
 		if nodeInfo, ok := response.GetPayloadVariant().(*gomeshproto.FromRadio_NodeInfo); ok {
 			nodes = append(nodes, nodeInfo)
 		}
+	}
+	return nodes, nil
+}
+
+func getMeshNodes(r gomesh.Radio) ([]MeshNode, error) {
+	nodes, err := getNodes(r)
+	if err != nil {
+		return nil, err
+	}
+
+	meshNodes := make([]MeshNode, 0)
+	for _, node := range nodes {
+		meshNode := ProtoNodeToMeshNode(node)
+		meshNodes = append(meshNodes, meshNode)
+	}
+	return meshNodes, nil
+}
+
+func displayNodes(r gomesh.Radio, jsonFormat bool) error {
+	nodes, err := getNodes(r)
+
+	if err != nil {
+		return err
 	}
 
 	if jsonFormat {
@@ -184,6 +207,7 @@ type MeshNode struct {
 	LastHeard           string  `json:"last_heard,omitempty"`
 	LastHeardSecondsAgo int     `json:"last_heard_seconds_ago,omitempty"`
 	LastHeardHuman      string  `json:"last_heard_human,omitempty"`
+	SignalToNoiseRatio  float64 `json:"SNR,omitempty"`
 }
 
 func ProtoNodeToMeshNode(node *gomeshproto.FromRadio_NodeInfo) MeshNode {
@@ -281,6 +305,10 @@ func ProtoNodeToMeshNode(node *gomeshproto.FromRadio_NodeInfo) MeshNode {
 
 	if node.NodeInfo.DeviceMetrics.AirUtilTx != 0 {
 		meshNode.AirUtilTx = float64(node.NodeInfo.DeviceMetrics.AirUtilTx)
+	}
+
+	if node.NodeInfo.Snr != 0 {
+		meshNode.SignalToNoiseRatio = float64(node.NodeInfo.Snr)
 	}
 
 	if node.NodeInfo.Position == nil {
